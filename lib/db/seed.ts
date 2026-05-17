@@ -1,6 +1,8 @@
 import { neonConfig, Pool } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
+import { eq } from 'drizzle-orm';
 import * as schema from './schema';
+import { auth } from '../auth';
 
 // Bun has a native WebSocket global — no ws package needed
 neonConfig.webSocketConstructor = WebSocket;
@@ -35,48 +37,32 @@ async function seed() {
   const clubMap = Object.fromEntries(insertedClubs.map((c) => [c.name, c.id]));
   console.log('✓ Clubs seeded');
 
-  // Users (passwords managed by Better Auth in Phase 2)
   const now = new Date();
 
-  const insertedUsers = await db
-    .insert(schema.users)
-    .values([
-      {
-        id: crypto.randomUUID(),
-        name: 'Admin',
-        email: 'admin@evenza.com',
-        emailVerified: true,
-        role: 'admin',
-        onboardingComplete: true,
-        createdAt: now,
-        updatedAt: now,
-      },
-      {
-        id: crypto.randomUUID(),
-        name: 'Test Organizer',
-        email: 'organizer@evenza.com',
-        emailVerified: true,
-        role: 'organizer',
-        onboardingComplete: true,
-        createdAt: now,
-        updatedAt: now,
-      },
-      {
-        id: crypto.randomUUID(),
-        name: 'Test Student',
-        email: 'student@evenza.com',
-        emailVerified: true,
-        role: 'student',
-        onboardingComplete: true,
-        createdAt: now,
-        updatedAt: now,
-      },
-    ])
-    .returning();
+  // Users — created via Better Auth so passwords are properly hashed in the
+  // accounts table and the users can actually log in.
+  const seedUsers = [
+    { name: 'Admin', email: 'admin@evenza.com', password: 'Admin@123', role: 'admin' as const },
+    { name: 'Test Organizer', email: 'organizer@evenza.com', password: 'Organizer@123', role: 'organizer' as const },
+    { name: 'Test Student', email: 'student@evenza.com', password: 'Student@123', role: 'student' as const },
+  ];
 
-  const userMap = Object.fromEntries(insertedUsers.map((u) => [u.email, u.id]));
+  for (const u of seedUsers) {
+    await auth.api.signUpEmail({ body: { name: u.name, email: u.email, password: u.password } });
+    await db
+      .update(schema.users)
+      .set({ role: u.role, onboardingComplete: true, emailVerified: true })
+      .where(eq(schema.users.email, u.email));
+  }
+
+  const allSeededUsers = await db.select().from(schema.users);
+  const userMap = Object.fromEntries(
+    allSeededUsers
+      .filter((u) => seedUsers.some((s) => s.email === u.email))
+      .map((u) => [u.email, u.id]),
+  );
   const organizerId = userMap['organizer@evenza.com'];
-  console.log('✓ Users seeded');
+  console.log('✓ Users seeded (with loginable accounts)');
 
   // OrganizerClubs
   await db.insert(schema.organizerClubs).values([
@@ -137,8 +123,12 @@ async function seed() {
   console.log('\nSeed complete! Summary:');
   console.log(`  - ${insertedCategories.length} categories`);
   console.log(`  - ${insertedClubs.length} clubs`);
-  console.log(`  - ${insertedUsers.length} users`);
+  console.log(`  - ${seedUsers.length} users`);
   console.log('  - 3 events (1 upcoming, 1 live, 1 past)');
+  console.log('\nTest credentials:');
+  console.log('  admin@evenza.com     / Admin@123');
+  console.log('  organizer@evenza.com / Organizer@123');
+  console.log('  student@evenza.com   / Student@123');
 
   await pool.end();
 }

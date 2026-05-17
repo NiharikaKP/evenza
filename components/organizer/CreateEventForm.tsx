@@ -98,11 +98,9 @@ export function CreateEventForm({
     const data = new FormData();
     data.append('file', fileToUpload);
     const res = await fetch('/api/upload?type=events', { method: 'POST', body: data });
-    if (!res.ok) {
-      const { error } = await res.json();
-      throw new Error(error ?? 'Upload failed');
-    }
-    return (await res.json()).url as string;
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.error ?? 'Upload failed');
+    return json.url as string;
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
