@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { CalendarDays, MapPin, Users } from 'lucide-react';
+import { CalendarDays, ExternalLink, MapPin, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from '@/components/shared/StatusBadge';
@@ -17,6 +17,7 @@ type EventCardProps = {
     totalSeats: number;
     isCancelled: boolean;
     isFeatured: boolean;
+    googleDriveUrl?: string | null;
     club: { name: string; imageUrl: string | null } | null;
     category: { name: string } | null;
   };
@@ -34,7 +35,7 @@ export function EventCard({ event, registeredCount }: EventCardProps) {
     registeredCount !== undefined ? event.totalSeats - registeredCount : null;
 
   return (
-    <Link href={`/events/${event.id}`} className="group block h-full">
+    <div className="group block h-full relative">
       <Card className="h-full overflow-hidden transition-shadow hover:shadow-md">
         <div className="relative h-40 w-full overflow-hidden rounded-t-lg">
           {!isPlaceholderImage(event.imageUrl) ? (
@@ -100,8 +101,22 @@ export function EventCard({ event, registeredCount }: EventCardProps) {
               <span>{seatsLeft} seats left</span>
             </div>
           )}
+          {event.googleDriveUrl && (
+            <div className="pt-2 mt-1 border-t">
+              <a
+                href={event.googleDriveUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative z-10 inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+              >
+                <ExternalLink className="h-3 w-3" />
+                View Gallery
+              </a>
+            </div>
+          )}
         </CardContent>
       </Card>
-    </Link>
+      <Link href={`/events/${event.id}`} className="absolute inset-0" aria-label={event.title} />
+    </div>
   );
 }

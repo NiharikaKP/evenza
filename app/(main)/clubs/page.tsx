@@ -12,7 +12,7 @@ export default async function ClubsPage() {
       <div>
         <h1 className="text-3xl font-bold mb-2">Clubs</h1>
         <p className="text-muted-foreground">
-          Explore all clubs — click one to see their events.
+          Explore all clubs and their events.
         </p>
       </div>
 

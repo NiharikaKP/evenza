@@ -151,7 +151,7 @@ export default async function EventDetailPage({ params }: { params: Params }) {
               className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
             >
               <ExternalLink className="h-4 w-4" />
-              View Resources
+              View Gallery
             </a>
           )}
         </div>

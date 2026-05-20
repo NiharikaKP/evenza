@@ -17,6 +17,7 @@ type FeaturedEvent = {
   id: string;
   title: string;
   description: string;
+  imageUrl: string | null;
   startTime: Date;
   club: { name: string; imageUrl: string | null } | null;
   category: { name: string } | null;
@@ -46,7 +47,15 @@ export function HeroCarousel({ events }: { events: FeaturedEvent[] }) {
             <Link href={`/events/${event.id}`} className="block">
               <div className="relative h-[420px] md:h-[680px] w-full overflow-hidden">
                 {/* Background image or gradient */}
-                {event.club && !isPlaceholderImage(event.club.imageUrl) ? (
+                {!isPlaceholderImage(event.imageUrl) ? (
+                  <Image
+                    src={event.imageUrl!}
+                    alt={event.title}
+                    fill
+                    className="object-cover brightness-75"
+                    priority
+                  />
+                ) : event.club && !isPlaceholderImage(event.club.imageUrl) ? (
                   <Image
                     src={event.club.imageUrl!}
                     alt={event.title}
